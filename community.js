@@ -1,117 +1,92 @@
+/**
+ * コミュニティページのJavaScript
+ */
 jQuery(document).ready(function($) {
-    // デバッグ情報を表示
-    console.log('Community script loaded');
-    console.log('AJAX URL:', community_vars.ajax_url);
-    console.log('REST URL:', community_vars.rest_url);
+    // タブ切り替え
+    $('.tab-item').on('click', function() {
+        var tabId = $(this).data('tab');
+        
+        // タブメニューのアクティブ状態を切り替え
+        $('.tab-item').removeClass('active');
+        $(this).addClass('active');
+        
+        // コンテンツの表示・非表示を切り替え
+        $('.tab-content').removeClass('active');
+        $('#' + tabId + '-content').addClass('active');
+    });
     
-    // トピックカテゴリーの取得（AJAX経由）
-    $.ajax({
-        url: community_vars.ajax_url,
-        type: 'POST',
-        data: {
-            action: 'get_topic_categories'
-        },
-        success: function(response) {
-            console.log('Category response:', response);
-            if (response.success) {
-                window.topic_categories = response.data;
-                console.log('Categories loaded successfully');
-            } else {
-                console.log('カテゴリー取得に失敗しました:', response);
-            }
-        },
-        error: function(xhr, status, error) {
-            console.log('カテゴリー取得エラー:', status, error);
-        }
-    });
-
-    // 新規トピック作成ボタンのクリックイベント
-    $('.new-topic-btn').on('click', function(e) {
-        e.preventDefault();
-        console.log('New topic button clicked');
-        
-        // モーダルの作成とHTML挿入
-        var modalHtml = `
-            <div id="topic-modal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;justify-content:center;align-items:center;">
-                <div style="background:white;padding:20px;border-radius:5px;max-width:600px;width:90%;">
-                    <h3>新しいトピックを作成</h3>
-                    <form id="new-topic-form">
-                        <div class="form-group">
-                            <label for="topic-category">カテゴリー</label>
-                            <select id="topic-category" class="form-control">
-                                <option value="">カテゴリーを選択</option>
-                                ${window.topic_categories ? window.topic_categories : ''}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="topic-title">タイトル</label>
-                            <input type="text" id="topic-title" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="topic-content">内容</label>
-                            <textarea id="topic-content" class="form-control" rows="5" required></textarea>
-                        </div>
-                        <input type="hidden" id="topic_nonce" name="topic_nonce" value="${community_vars.nonce}">
-                        <div style="text-align:right;margin-top:15px;">
-                            <button type="button" id="close-modal" style="margin-right:10px;">キャンセル</button>
-                            <button type="submit">投稿する</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        `;
-        
-        $('body').append(modalHtml);
-        console.log('Modal created');
-        
-        // モーダルを閉じる処理
-        $('#close-modal').on('click', function() {
-            $('#topic-modal').remove();
-        });
-        
-        // トピック送信処理
-        $('#new-topic-form').on('submit', function(e) {
-            e.preventDefault();
-            console.log('New topic form submitted');
-            
-            var category = $('#topic-category').val();
-            var title = $('#topic-title').val();
-            var content = $('#topic-content').val();
-            var nonce = $('#topic_nonce').val();
-            
-            console.log('Form data:', { category, title, content, nonce });
-            
-            if (!title || !content) {
-                alert('タイトルと内容は必須です');
-                return;
-            }
-            
-            $.ajax({
-                url: community_vars.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'create_topic',
-                    title: title,
-                    content: content,
-                    category: category,
-                    nonce: nonce
-                },
-                success: function(response) {
-                    console.log('Topic response:', response);
-                    if (response.success) {
-                        alert(response.data.message);
-                        $('#topic-modal').remove();
-                        // ページをリロード
-                        location.reload();
-                    } else {
-                        alert(response.data || 'エラーが発生しました');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.log('Topic error:', status, error);
-                    alert('通信エラーが発生しました');
+    // トピックカテゴリーを読み込み
+    function loadTopicCategories() {
+        $.ajax({
+            url: community_vars.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'get_topic_categories'
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#topic-category').append(response.data);
                 }
-            });
+            }
+        });
+    }
+    
+    // ページ読み込み時にトピックカテゴリーを取得
+    loadTopicCategories();
+    
+    // トピック作成フォームの送信
+    $('#create-topic-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        var category = $('#topic-category').val();
+        var title = $('#topic-title').val();
+        var content = $('#topic-content').val();
+        var nonce = $('#topic_nonce').val();
+        
+        if (!title || !content || !category) {
+            $('#topic-form-message').html('すべての項目を入力してください。').addClass('notice notice-error').show();
+            return;
+        }
+        
+        $.ajax({
+            url: community_vars.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'create_topic',
+                category: category,
+                title: title,
+                content: content,
+                nonce: nonce
+            },
+            beforeSend: function() {
+                $('#topic-form-message').html('投稿中...').removeClass('notice-error').addClass('notice notice-info').show();
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#topic-form-message').html('トピックが作成されました。リダイレクトします...').removeClass('notice-info notice-error').addClass('notice-success');
+                    setTimeout(function() {
+                        window.location.href = response.data.redirect;
+                    }, 1500);
+                } else {
+                    $('#topic-form-message').html('エラーが発生しました: ' + response.data).removeClass('notice-info notice-success').addClass('notice-error');
+                }
+            },
+            error: function() {
+                $('#topic-form-message').html('通信エラーが発生しました。もう一度お試しください。').removeClass('notice-info notice-success').addClass('notice-error');
+            }
         });
     });
+    
+    // URLからタブパラメータを取得して対応するタブを表示
+    function showTabFromUrl() {
+        var urlParams = new URLSearchParams(window.location.search);
+        var tab = urlParams.get('tab');
+        
+        if (tab) {
+            $('.tab-item[data-tab="' + tab + '"]').click();
+        }
+    }
+    
+    // ページ読み込み時にURLからタブを取得して表示
+    showTabFromUrl();
 });
