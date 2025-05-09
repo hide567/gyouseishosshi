@@ -1,0 +1,472 @@
+/*
+Theme Name: 行政書士試験ブログ
+Theme URI: 
+Description: 行政書士試験勉強ブログ用のオリジナルテーマ
+Author: hideki
+Author URI: 
+Version: 1.0
+Requires at least: 5.9
+Tested up to: 6.4
+Requires PHP: 7.4
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: gyouseishoshi
+*/
+
+/* テーマの基本スタイル */
+:root {
+    --primary-color: #4a6fa5; /* 青緑→青色に変更 */
+    --secondary-color: #334e68; /* 暗めの青に変更 */
+    --accent-color: #d9d9d9;
+    --text-color: #333;
+    --light-bg: #f5f5f5;
+}
+
+body {
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: #fff;
+    margin: 0;
+    padding: 0;
+}
+
+.site-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 1.5rem 0;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.site-title a, .site-description {
+    color: white;
+}
+
+.main-navigation {
+    background-color: var(--secondary-color);
+    padding: 0.8rem 0;
+}
+
+.main-navigation ul {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    flex-wrap: wrap;
+    padding: 0;
+    margin: 0;
+}
+
+.main-navigation li {
+    margin: 0 1rem;
+}
+
+.main-navigation a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.main-navigation a:hover {
+    color: var(--accent-color);
+}
+
+.site-content {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 2rem;
+}
+
+.content-area {
+    grid-column: 1;
+}
+
+.widget-area {
+    grid-column: 2;
+}
+
+@media (max-width: 768px) {
+    .site-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .content-area, .widget-area {
+        grid-column: 1;
+    }
+}
+
+.entry {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 1rem;
+}
+
+.entry:last-child {
+    border-bottom: none;
+}
+
+.entry-header {
+    margin-bottom: 1rem;
+}
+
+.entry-title {
+    color: var(--secondary-color);
+    margin-bottom: 0.5rem;
+}
+
+.entry-meta {
+    color: #777;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.entry-category {
+    background-color: #e0e0e0; /* これを変更してみる */
+    color: #ffffff; /* テキスト色も暗めに変更 */
+    padding: 0.2rem 0.6rem;
+    border-radius: 3px;
+    margin-right: 1rem;
+    font-size: 0.8rem;
+}
+
+.entry-content {
+    margin-bottom: 1.5rem;
+}
+
+.entry-content h3 {
+    margin: 1.5rem 0 0.8rem;
+    color: var(--secondary-color);
+}
+
+.entry-content p {
+    margin-bottom: 1rem;
+}
+
+.entry-content ul, .entry-content ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.entry-content li {
+    margin-bottom: 0.5rem;
+}
+
+.entry-content blockquote {
+    border-left: 4px solid var(--primary-color);
+    padding-left: 1rem;
+    margin-left: 0;
+    color: #555;
+    font-style: italic;
+}
+
+.note-box {
+    background-color: #f8f9fa;
+    border-left: 4px solid #ffc107;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.important-box {
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.entry-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.entry-content th, .entry-content td {
+    border: 1px solid #ddd;
+    padding: 0.5rem;
+}
+
+.entry-content th {
+    background-color: var(--light-bg);
+}
+
+.post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+/* 投稿タグまたはカテゴリータグのスタイル */
+.post-tag {
+    background-color: #f0f0f0; /* 薄いグレーに変更 */
+    color: #333333;
+    padding: 0.2rem 0.6rem;
+    border-radius: 3px;
+    font-size: 0.8rem;
+}
+
+.post-tag:hover {
+    background-color: var(--accent-color);
+}
+
+.widget {
+    background-color: var(--light-bg);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-radius: 5px;
+}
+
+.widget-title {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: var(--secondary-color);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+}
+
+.widget ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.widget li {
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px dotted #ddd;
+}
+
+.widget li:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.widget a {
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+.widget a:hover {
+    color: var(--primary-color);
+}
+
+.category-list .post-count {
+    float: right;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.1rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+}
+
+.progress-widget .progress-bar {
+    height: 15px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+}
+
+.progress-widget .progress {
+    height: 100%;
+    background-color: var(--primary-color);
+}
+
+.progress-widget .progress-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.site-footer {
+    background-color: var(--secondary-color);
+    color: white;
+    text-align: center;
+    padding: 2rem 0;
+    margin-top: 3rem;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.footer-links {
+    margin: 1rem 0;
+}
+
+.footer-links a {
+    color: white;
+    margin: 0 0.5rem;
+    text-decoration: none;
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
+.copyright {
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-top: 1rem;
+}
+
+/* ナビゲーション */
+.pagination {
+    margin: 2rem 0;
+    text-align: center;
+}
+
+.pagination .page-numbers {
+    padding: 0.5rem 1rem;
+    margin: 0 0.2rem;
+    background: var(--light-bg);
+    color: var(--text-color);
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+.pagination .page-numbers.current {
+    background: var(--primary-color);
+    color: white;
+}
+
+.pagination .page-numbers:hover {
+    background: var(--accent-color);
+}
+
+/* 検索フォーム */
+.search-form {
+    display: flex;
+    margin-bottom: 1.5rem;
+}
+
+.search-field {
+    flex-grow: 1;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 3px 0 0 3px;
+}
+
+.search-submit {
+    padding: 0.5rem 1rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0 3px 3px 0;
+    cursor: pointer;
+}
+
+/* コメント */
+.comment-respond {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--light-bg);
+    border-radius: 5px;
+}
+
+.comment-reply-title {
+    margin-top: 0;
+    color: var(--secondary-color);
+}
+
+.comment-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.comment-form input[type="text"],
+.comment-form input[type="email"],
+.comment-form input[type="url"],
+.comment-form textarea {
+    width: 100%;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.comment-form input[type="submit"] {
+    padding: 0.5rem 1rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+/* 投稿ナビゲーション */
+.post-navigation {
+    margin: 2rem 0;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
+.post-navigation .nav-links {
+    display: flex;
+    justify-content: space-between;
+}
+
+.post-navigation .nav-previous,
+.post-navigation .nav-next {
+    max-width: 48%;
+}
+
+.post-navigation a {
+    color: var(--secondary-color);
+    text-decoration: none;
+}
+
+.post-navigation a:hover {
+    color: var(--primary-color);
+}
+
+/* フッターウィジェット */
+.footer-widget {
+    color: #ddd;
+    margin-bottom: 1.5rem;
+}
+
+.footer-widget-title {
+    color: white;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.footer-widget a {
+    color: #ddd;
+    text-decoration: none;
+}
+
+.footer-widget a:hover {
+    color: white;
+}
+
+/* レスポンシブデザイン調整 */
+@media (max-width: 480px) {
+    .site-header {
+        padding: 1rem 0;
+    }
+    
+    .site-title {
+        font-size: 1.5rem;
+    }
+    
+    .main-navigation li {
+        margin: 0 0.5rem;
+    }
+    
+    .entry-title {
+        font-size: 1.5rem;
+    }
+}
+
