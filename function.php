@@ -306,3 +306,33 @@ include_once(get_stylesheet_directory() . '/inc/study-calendar.php');
 // コミュニティ機能を含める
 include_once(get_stylesheet_directory() . '/inc/community-functions.php');
 
+/**
+ * カテゴリーの表示形式をカスタマイズする
+ */
+function custom_category_count_span($links) {
+    $links = str_replace('</a> (', '</a><span class="cat-count-span">(', $links);
+    $links = str_replace(')', ')</span>', $links);
+    return $links;
+}
+add_filter('wp_list_categories', 'custom_category_count_span');
+
+/**
+ * カテゴリーウィジェットに記事数を強制的に表示
+ */
+function force_category_count_display($args) {
+    // 記事数表示を強制的に有効化
+    $args['show_count'] = 1;
+    return $args;
+}
+add_filter('widget_categories_args', 'force_category_count_display');
+
+/**
+ * カテゴリー記事数のフォーマットを整える
+ */
+function custom_category_count_format($output) {
+    // 標準の括弧付き数字をカスタム表示に置き換え
+    $output = preg_replace('/<\/a> \(([0-9]+)\)/', '</a><span class="cat-count">($1)</span>', $output);
+    return $output;
+}
+add_filter('wp_list_categories', 'custom_category_count_format');
+
