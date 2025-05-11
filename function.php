@@ -336,3 +336,10 @@ function custom_category_count_format($output) {
 }
 add_filter('wp_list_categories', 'custom_category_count_format');
 
+//学習進捗管理
+/**
+ * 学習進捗管理機能を読み込む
+ */
+if (file_exists(get_stylesheet_directory() . '/inc/progress-tracker.php')) {
+    require_once get_stylesheet_directory() . '/inc/progress-tracker.php';
+}
