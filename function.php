@@ -164,9 +164,16 @@ if (file_exists(get_stylesheet_directory() . '/inc/progress-tracker.php')) {
 }
 
 /**
- * 管理画面の「不明なタスク」問題を修正
+ * Dialog Cards管理機能を読み込む
  */
-function fix_unknown_task_redirect() {
+if (file_exists(get_stylesheet_directory() . '/inc/dialog-cards-manager.php')) {
+    require_once get_stylesheet_directory() . '/inc/dialog-cards-manager.php';
+}
+
+/**
+ * 管理画面の「不明なタスク」問題を修正（Dialog Cards対応版）
+ */
+function fix_h5p_task_redirect() {
     global $pagenow;
     
     // 管理画面編集ページでパラメーターを確認
@@ -190,9 +197,67 @@ function fix_unknown_task_redirect() {
         // 表示タスクの場合
         if ($task == 'show' && isset($_GET['id'])) {
             $id = intval($_GET['id']);
-            wp_redirect(admin_url("admin.php?page=h5p-content&id={$id}&view=true"));
-            exit;
+            
+            // コンテンツタイプを確認し、Dialog Cardsの場合は適切なURLにリダイレクト
+            global $wpdb;
+            $content_table = $wpdb->prefix . 'h5p_contents';
+            $library_table = $wpdb->prefix . 'h5p_libraries';
+            
+            // コンテンツのライブラリを確認
+            $content_library = $wpdb->get_var($wpdb->prepare(
+                "SELECT l.name FROM {$library_table} l
+                JOIN {$content_table} c ON c.library_id = l.id
+                WHERE c.id = %d",
+                $id
+            ));
+            
+            if ($content_library == 'H5P.DialogCards' || strpos($content_library, 'DialogCards') !== false) {
+                // Dialog Cards用のリダイレクト
+                wp_redirect(admin_url("admin.php?page=h5p-content&id={$id}&view=true"));
+                exit;
+            } else {
+                // 通常のリダイレクト
+                wp_redirect(admin_url("admin.php?page=h5p-content&id={$id}&view=true"));
+                exit;
+            }
+        }
+    }
+    
+    // Dialog Cardsのアクセス権限問題を修正
+    if ($pagenow == 'admin.php' && isset($_GET['page']) && $_GET['page'] == 'h5p-content' && isset($_GET['id']) && isset($_GET['view'])) {
+        global $wpdb;
+        $content_table = $wpdb->prefix . 'h5p_contents';
+        $library_table = $wpdb->prefix . 'h5p_libraries';
+        $id = intval($_GET['id']);
+        
+        // コンテンツのライブラリを確認
+        $content_library = $wpdb->get_var($wpdb->prepare(
+            "SELECT l.name FROM {$library_table} l
+            JOIN {$content_table} c ON c.library_id = l.id
+            WHERE c.id = %d",
+            $id
+        ));
+        
+        // Dialog Cardsの場合
+        if ($content_library == 'H5P.DialogCards' || strpos($content_library, 'DialogCards') !== false) {
+            // 表示権限を付与
+            add_filter('h5p_alter_user_result', function ($content_id, $user_id) use ($id) {
+                if ($content_id == $id) {
+                    return (object) array(
+                        'user_id' => $user_id,
+                        'content_id' => $content_id,
+                        'view_access' => true
+                    );
+                }
+                return null;
+            }, 10, 2);
         }
     }
 }
-add_action('admin_init', 'fix_unknown_task_redirect');
+add_action('admin_init', 'fix_h5p_task_redirect');
+// Dialog Cards 管理機能を読み込む
+if (file_exists(get_stylesheet_directory() . '/Dialog-Cards.php')) {
+    require_once get_stylesheet_directory() . '/Dialog-Cards.php';
+} elseif (file_exists(get_stylesheet_directory() . '/inc/Dialog-Cards.php')) {
+    require_once get_stylesheet_directory() . '/inc/Dialog-Cards.php';
+}
