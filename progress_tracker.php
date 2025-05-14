@@ -300,38 +300,19 @@ function progress_tracker_admin_page() {
         
         echo '<div class="notice notice-success is-dismissible"><p>チェック設定を保存しました。</p></div>';
     }
-    
-    // 暗記カードと科目の関連付け
-    if (isset($_POST['save_flashcard_relation'])) {
-        $flashcard_id = intval($_POST['flashcard_id']);
-        $subject_key = sanitize_key($_POST['subject_key']);
-        $chapter_id = intval($_POST['chapter_id']);
-        
-        // 関連データを保存
-        $flashcard_relations = get_option('progress_tracker_flashcards', array());
-        $flashcard_relations[$flashcard_id] = array(
-            'subject' => $subject_key,
-            'chapter' => $chapter_id
-        );
-        update_option('progress_tracker_flashcards', $flashcard_relations);
-        
-        echo '<div class="notice notice-success is-dismissible"><p>暗記カードと科目の関連付けを保存しました。</p></div>';
-    }
+
     
     // タブの処理
     $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'structure';
     ?>
     <div class="wrap">
-        <h1>学習進捗管理</h1>
-        
+        <h1>学習進捗管理</h1>   
         <h2 class="nav-tab-wrapper">
-            <a href="?page=progress-tracker&tab=subjects" class="nav-tab <?php echo $active_tab == 'subjects' ? 'nav-tab-active' : ''; ?>">科目管理</a>
-            <a href="?page=progress-tracker&tab=structure" class="nav-tab <?php echo $active_tab == 'structure' ? 'nav-tab-active' : ''; ?>">科目構造設定</a>
-            <a href="?page=progress-tracker&tab=progress" class="nav-tab <?php echo $active_tab == 'progress' ? 'nav-tab-active' : ''; ?>">進捗管理</a>
-            <a href="?page=progress-tracker&tab=flashcards" class="nav-tab <?php echo $active_tab == 'flashcards' ? 'nav-tab-active' : ''; ?>">暗記カード</a>
-            <a href="?page=progress-tracker&tab=settings" class="nav-tab <?php echo $active_tab == 'settings' ? 'nav-tab-active' : ''; ?>">設定</a>
-        </h2>
-        
+    <a href="?page=progress-tracker&tab=subjects" class="nav-tab <?php echo $active_tab == 'subjects' ? 'nav-tab-active' : ''; ?>">科目管理</a>
+    <a href="?page=progress-tracker&tab=structure" class="nav-tab <?php echo $active_tab == 'structure' ? 'nav-tab-active' : ''; ?>">科目構造設定</a>
+    <a href="?page=progress-tracker&tab=progress" class="nav-tab <?php echo $active_tab == 'progress' ? 'nav-tab-active' : ''; ?>">進捗管理</a>
+    <a href="?page=progress-tracker&tab=settings" class="nav-tab <?php echo $active_tab == 'settings' ? 'nav-tab-active' : ''; ?>">設定</a>
+</h2>
         <?php if ($active_tab == 'subjects'): ?>
         <!-- 科目管理タブ -->
         <div class="admin-section">
@@ -615,200 +596,6 @@ function progress_tracker_admin_page() {
             </p>
         </form>
         
-        <?php elseif ($active_tab == 'flashcards'): ?>
-        <!-- 暗記カード管理タブ -->
-        <h3>暗記カード管理</h3>
-        <p>H5Pプラグインを使って科目ごとの暗記カードを管理できます。</p>
-
-        <?php
-        // H5Pプラグインの確認
-        global $wpdb;
-        $h5p_contents_table = $wpdb->prefix . 'h5p_contents';
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$h5p_contents_table'") == $h5p_contents_table;
-
-        if (!function_exists('H5P_Plugin') && !class_exists('H5P_Plugin') && !function_exists('h5p_get_instance') && !class_exists('H5PPlugin') && !$table_exists) {
-            echo '<div class="notice notice-warning"><p>H5Pプラグインがインストールされていないか、有効化されていません。<a href="' . admin_url('plugin-install.php?s=H5P&tab=search&type=term') . '">こちら</a>からインストールしてください。</p></div>';
-        } else {
-            // H5Pコンテンツの取得
-            $h5p_contents = array();
-            
-            if ($table_exists) {
-                $h5p_contents = $wpdb->get_results("SELECT id, title, created_at FROM $h5p_contents_table ORDER BY id DESC");
-            }
-            
-            // 関連データを取得
-            $flashcard_relations = get_option('progress_tracker_flashcards', array());
-            
-            // 新しい暗記カードを作成するボタン
-            echo '<p><a href="' . admin_url('admin.php?page=h5p&task=new') . '" class="button button-primary">新しい暗記カードを作成</a></p>';
-            
-            // 既存の暗記カード一覧
-            if (!empty($h5p_contents)) {
-                echo '<h4>暗記カード一覧</h4>';
-                echo '<table class="wp-list-table widefat fixed striped">';
-                echo '<thead><tr><th>ID</th><th>タイトル</th><th>作成日</th><th>関連科目</th><th>操作</th></tr></thead>';
-                echo '<tbody>';
-                
-                foreach ($h5p_contents as $content) {
-                    echo '<tr>';
-                    echo '<td>' . esc_html($content->id) . '</td>';
-                    echo '<td>' . esc_html($content->title) . '</td>';
-                    echo '<td>' . esc_html(date('Y-m-d', strtotime($content->created_at))) . '</td>';
-                    
-                    // 関連科目の表示
-                    echo '<td>';
-                    if (isset($flashcard_relations[$content->id])) {
-                        $subject_key = $flashcard_relations[$content->id]['subject'];
-                        $chapter_id = $flashcard_relations[$content->id]['chapter'];
-                        
-                        $subject_name = isset($subjects[$subject_key]) ? $subjects[$subject_key] : '不明';
-                        $chapter_title = isset($chapter_structure[$subject_key]['chapters'][$chapter_id]['title']) ? 
-                                        $chapter_structure[$subject_key]['chapters'][$chapter_id]['title'] : '第' . $chapter_id . '章';
-                        
-                        echo esc_html($subject_name) . ' - ' . esc_html($chapter_title);
-                    } else {
-                        echo '未設定';
-                    }
-                    echo '</td>';
-                    
-                    // 操作列
-                    echo '<td>';
-                    echo '<a href="' . admin_url('admin.php?page=h5p&task=show&id=' . $content->id) . '" class="button button-small">表示</a> ';
-                    echo '<a href="' . admin_url('admin.php?page=h5p&task=edit&id=' . $content->id) . '" class="button button-small">編集</a> ';
-                    echo '<button type="button" class="button button-small set-relation" data-id="' . esc_attr($content->id) . '">関連付け</button>';
-                    echo '</td>';
-                    
-                    echo '</tr>';
-                }
-                
-                echo '</tbody></table>';
-                
-                // 関連付けモーダル
-                ?>
-                <div id="relation-modal" class="modal-overlay" style="display:none;">
-                    <div class="modal-content">
-                        <h3>暗記カードと科目の関連付け</h3>
-                        <form method="post" action="">
-                            <input type="hidden" id="flashcard_id" name="flashcard_id" value="">
-                            <table class="form-table">
-                                <tr>
-                                    <th scope="row">科目</th>
-                                    <td>
-                                        <select id="subject_key" name="subject_key" class="regular-text">
-                                            <?php foreach ($subjects as $key => $name): ?>
-                                                <option value="<?php echo esc_attr($key); ?>"><?php echo esc_html($name); ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">章</th>
-                                    <td>
-                                        <select id="chapter_id" name="chapter_id" class="regular-text">
-                                            <option value="0">選択してください</option>
-                                        </select>
-                                    </td>
-                                </tr>
-                            </table>
-                            <p class="submit">
-                                <input type="submit" name="save_flashcard_relation" class="button button-primary" value="保存">
-                                <button type="button" class="button close-modal">キャンセル</button>
-                            </p>
-                        </form>
-                    </div>
-                </div>
-                
-                <script>
-                jQuery(document).ready(function($) {
-                    // 章の選択肢を更新する関数
-                    function updateChapters() {
-                        var subject = $('#subject_key').val();
-                        var $chapterSelect = $('#chapter_id');
-                        
-                        // 章の選択肢をクリア
-                        $chapterSelect.empty().append('<option value="0">選択してください</option>');
-                        
-                        // 科目の章データを取得
-                        var chapters = <?php echo json_encode($chapter_structure); ?>;
-                        
-                        if (chapters[subject] && chapters[subject]['chapters']) {
-                            $.each(chapters[subject]['chapters'], function(id, chapter) {
-                                $chapterSelect.append(
-                                    $('<option>', {
-                                        value: id,
-                                        text: chapter.title
-                                    })
-                                );
-                            });
-                        }
-                    }
-                    
-                    // 科目が変更されたら章の選択肢を更新
-                    $('#subject_key').on('change', updateChapters);
-                    
-                    // 関連付けボタンがクリックされたとき
-                    $('.set-relation').on('click', function() {
-                        var id = $(this).data('id');
-                        $('#flashcard_id').val(id);
-                        
-                        // 既存の関連付けがあれば選択
-                        var relations = <?php echo json_encode($flashcard_relations); ?>;
-                        if (relations[id]) {
-                            $('#subject_key').val(relations[id].subject);
-                            updateChapters();
-                            setTimeout(function() {
-                                $('#chapter_id').val(relations[id].chapter);
-                            }, 100);
-                        } else {
-                            updateChapters();
-                        }
-                        
-                        // モーダルを表示
-                        $('#relation-modal').show();
-                    });
-                    
-                    // モーダルを閉じる
-                    $('.close-modal').on('click', function(e) {
-                        e.preventDefault();
-                        $(this).closest('.modal-overlay').hide();
-                    });
-                    
-                    // モーダル外をクリックしたら閉じる
-                    $('.modal-overlay').on('click', function(e) {
-                        if (e.target === this) {
-                            $(this).hide();
-                        }
-                    });
-                    
-                    // 科目編集ボタンのクリックイベント
-                    $('.edit-subject').on('click', function() {
-                        var key = $(this).data('key');
-                        var name = $(this).data('name');
-                        var color = $(this).data('color');
-                        
-                        $('#edit_subject_key').val(key);
-                        $('#edit_subject_name').val(name);
-                        $('#edit_progress_color').val(color);
-                        
-                        $('#edit-subject-modal').show();
-                    });
-                });
-                </script>
-                <?php
-                
-                // ショートコードの使用方法
-                echo '<h4>ショートコードの使用方法</h4>';
-                echo '<p>以下のショートコードを使って、暗記カードを表示できます：</p>';
-                echo '<code>[study_flashcards id="カードID"]</code> - 特定の暗記カードを表示<br>';
-                echo '<code>[study_flashcards subject="科目キー"]</code> - 科目に関連付けられたすべての暗記カードを表示<br>';
-                echo '<code>[study_flashcards chapter="章ID" subject="科目キー"]</code> - 特定の章に関連付けられた暗記カードを表示';
-            } else {
-                echo '<p>暗記カードがまだ作成されていません。「新しい暗記カードを作成」ボタンから作成してください。</p>';
-            }
-        }
-        ?>
-        
-        <?php elseif ($active_tab == 'settings'): ?>
         <!-- 設定タブ -->
         <h3>進捗管理設定</h3>
         <form method="post" action="">
@@ -1775,83 +1562,6 @@ function progress_tracker_countdown_shortcode($atts) {
 }
 add_shortcode('exam_countdown', 'progress_tracker_countdown_shortcode');
 
-/**
-* 暗記カード表示用ショートコード
-*/
-function study_flashcards_shortcode($atts) {
-   // 属性の初期化
-   $atts = shortcode_atts(array(
-       'id' => 0,           // 特定のH5Pコンテンツを表示
-       'subject' => '',     // 科目に関連付けられたカードを表示
-       'chapter' => 0,      // 章に関連付けられたカードを表示
-   ), $atts, 'study_flashcards');
-   
-   // H5Pプラグインが有効か確認
-   global $wpdb;
-   $h5p_contents_table = $wpdb->prefix . 'h5p_contents';
-   $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$h5p_contents_table'") == $h5p_contents_table;
-
-   if (!function_exists('H5P_Plugin') && !class_exists('H5P_Plugin') && !function_exists('h5p_get_instance') && !class_exists('H5PPlugin') && !$table_exists) {
-       return '<p>H5Pプラグインが有効化されていません。</p>';
-   }
-   
-   // 出力開始
-   ob_start();
-   
-   echo '<div class="study-track-flashcards">';
-   
-   // 特定のIDが指定されている場合
-   if (!empty($atts['id'])) {
-       $flashcard_id = intval($atts['id']);
-       echo do_shortcode('[h5p id="' . $flashcard_id . '"]');
-   }
-   // 科目が指定されている場合
-   elseif (!empty($atts['subject'])) {
-       $subject_key = sanitize_key($atts['subject']);
-       $chapter_id = !empty($atts['chapter']) ? intval($atts['chapter']) : 0;
-       
-       // 関連付けられたカードを検索
-       $flashcard_relations = get_option('progress_tracker_flashcards', array());
-       $filtered_cards = array();
-       
-       foreach ($flashcard_relations as $card_id => $relation) {
-           if ($relation['subject'] == $subject_key) {
-               if ($chapter_id == 0 || $relation['chapter'] == $chapter_id) {
-                   $filtered_cards[] = $card_id;
-               }
-           }
-       }
-       
-       if (!empty($filtered_cards)) {
-           foreach ($filtered_cards as $card_id) {
-               echo do_shortcode('[h5p id="' . $card_id . '"]');
-               echo '<div class="flashcard-separator"></div>';
-           }
-       } else {
-           echo '<p>この条件に一致する暗記カードはありません。</p>';
-       }
-   } else {
-       echo '<p>暗記カードIDまたは科目を指定してください。</p>';
-   }
-   
-   echo '</div>';
-   
-   // スタイルを追加
-   echo '<style>
-   .study-track-flashcards {
-       margin-bottom: 30px;
-   }
-   
-   .flashcard-separator {
-       height: 20px;
-       border-top: 1px solid #eee;
-       margin: 20px 0;
-   }
-   </style>';
-   
-   return ob_get_clean();
-}
-add_shortcode('study_flashcards', 'study_flashcards_shortcode');
 
 /**
  * 管理画面ロード時に初期設定を実行
