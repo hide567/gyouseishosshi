@@ -379,9 +379,15 @@ function progress_tracker_admin_page() {
 
         <?php
         // H5Pプラグインの確認
-        if (!function_exists('H5P_Plugin')) {
-            echo '<div class="notice notice-warning"><p>H5Pプラグインがインストールされていないか、有効化されていません。<a href="' . admin_url('plugin-install.php?s=H5P&tab=search&type=term') . '">こちら</a>からインストールしてください。</p></div>';
-        } else {
+        // 修正後のコード
+// H5Pプラグインの確認（複数の可能性をチェック）
+global $wpdb;
+$h5p_contents_table = $wpdb->prefix . 'h5p_contents';
+$table_exists = $wpdb->get_var("SHOW TABLES LIKE '$h5p_contents_table'") == $h5p_contents_table;
+
+if (!function_exists('H5P_Plugin') && !class_exists('H5P_Plugin') && !function_exists('h5p_get_instance') && !class_exists('H5PPlugin') && !$table_exists) {
+    echo '<div class="notice notice-warning"><p>H5Pプラグインがインストールされていないか、有効化されていません。<a href="' . admin_url('plugin-install.php?s=H5P&tab=search&type=term') . '">こちら</a>からインストールしてください。</p></div>';
+}else {
             // H5Pコンテンツの取得
             global $wpdb;
             $h5p_contents_table = $wpdb->prefix . 'h5p_contents';
@@ -1146,9 +1152,15 @@ function study_flashcards_shortcode($atts) {
    ), $atts, 'study_flashcards');
    
    // H5Pプラグインが有効か確認
-   if (!function_exists('H5P_Plugin')) {
-       return '<p>H5Pプラグインが有効化されていません。</p>';
-   }
+   // 修正後のコード
+// H5Pプラグインが有効か確認（複数の可能性をチェック）
+global $wpdb;
+$h5p_contents_table = $wpdb->prefix . 'h5p_contents';
+$table_exists = $wpdb->get_var("SHOW TABLES LIKE '$h5p_contents_table'") == $h5p_contents_table;
+
+if (!function_exists('H5P_Plugin') && !class_exists('H5P_Plugin') && !function_exists('h5p_get_instance') && !class_exists('H5PPlugin') && !$table_exists) {
+    return '<p>H5Pプラグインが有効化されていません。</p>';
+}
    
    // 出力開始
    ob_start();
