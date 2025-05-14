@@ -696,3 +696,169 @@ function progress_tracker_shortcode($atts) {
     return ob_get_clean();
 }
 add_shortcode('progress_tracker', 'progress_tracker_shortcode');
+
+/**
+ * カスタマイズ設定ページを追加
+ */
+function progress_tracker_customize_menu() {
+    add_submenu_page(
+        'progress-tracker',
+        '設定とカスタマイズ',
+        '設定とカスタマイズ',
+        'manage_options',
+        'progress-tracker-settings',
+        'progress_tracker_settings_page'
+    );
+}
+add_action('admin_menu', 'progress_tracker_customize_menu');
+
+/**
+ * 設定ページの内容
+ */
+function progress_tracker_settings_page() {
+    // 権限チェック
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+    
+    // 保存処理
+    if (isset($_POST['save_settings'])) {
+        $settings = array(
+            'exam_date' => sanitize_text_field($_POST['exam_date']),
+            'exam_title' => sanitize_text_field($_POST['exam_title']),
+            'progress_bar_color' => sanitize_hex_color($_POST['progress_bar_color']),
+            'completed_item_color' => sanitize_hex_color($_POST['completed_item_color'])
+        );
+        
+        update_option('progress_tracker_settings', $settings);
+        echo '<div class="notice notice-success is-dismissible"><p>設定を保存しました。</p></div>';
+    }
+    
+    // 現在の設定を取得
+    $settings = get_option('progress_tracker_settings', array(
+        'exam_date' => '2025-11-09',
+        'exam_title' => '試験',
+        'progress_bar_color' => '#4CAF50',
+        'completed_item_color' => '#e6f7e6'
+    ));
+    
+    ?>
+    <div class="wrap">
+        <h1>学習進捗管理 - 設定とカスタマイズ</h1>
+        
+        <form method="post" action="">
+            <h3>全般設定</h3>
+            <table class="form-table">
+                <tr>
+                    <th scope="row">試験日</th>
+                    <td>
+                        <input type="date" name="exam_date" value="<?php echo esc_attr($settings['exam_date']); ?>" class="regular-text">
+                        <p class="description">カウントダウンに使用される試験日を設定します。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">試験名/資格名</th>
+                    <td>
+                        <input type="text" name="exam_title" value="<?php echo esc_attr($settings['exam_title']); ?>" class="regular-text">
+                        <p class="description">カウントダウンに表示される試験や資格の名称</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">プログレスバーの色</th>
+                    <td>
+                        <input type="color" name="progress_bar_color" value="<?php echo esc_attr($settings['progress_bar_color']); ?>">
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">完了項目の色</th>
+                    <td>
+                        <input type="color" name="completed_item_color" value="<?php echo esc_attr($settings['completed_item_color']); ?>">
+                    </td>
+                </tr>
+            </table>
+            
+            <h3>ショートコードの使用方法</h3>
+            <div class="shortcode-usage">
+                <p>進捗表示ショートコード: <code>[progress_tracker]</code></p>
+                <p>特定の科目のみ表示: <code>[progress_tracker subject="constitutional,civil"]</code></p>
+                <p>スタイル指定: <code>[progress_tracker style="simple"]</code> (スタイル: default, simple, compact)</p>
+                <p>試験カウントダウン: <code>[exam_countdown]</code></p>
+                <p>カスタム試験名: <code>[exam_countdown title="司法試験"]</code></p>
+            </div>
+            
+            <p class="submit">
+                <input type="submit" name="save_settings" class="button button-primary" value="設定を保存">
+            </p>
+        </form>
+    </div>
+    
+    <style>
+    .shortcode-usage {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 5px;
+        border-left: 4px solid #0073aa;
+    }
+    .shortcode-usage code {
+        background: #fff;
+        padding: 3px 5px;
+        border-radius: 3px;
+    }
+    </style>
+    <?php
+}
+
+/**
+ * 試験日カウントダウンショートコード
+ */
+function progress_tracker_countdown_shortcode($atts) {
+    // 属性の初期化
+    $atts = shortcode_atts(array(
+        'title' => '',    // カスタム試験名
+    ), $atts, 'exam_countdown');
+    
+    // 設定を取得
+    $settings = get_option('progress_tracker_settings', array(
+        'exam_date' => '2025-11-09',
+        'exam_title' => '試験'
+    ));
+    
+    if (empty($settings['exam_date'])) {
+        return '<p>試験日が設定されていません。</p>';
+    }
+    
+    $exam_date = strtotime($settings['exam_date']);
+    $today = current_time('timestamp');
+    $days_left = floor(($exam_date - $today) / (60 * 60 * 24));
+    
+    if ($days_left < 0) {
+        return '<p>試験日は過ぎました。</p>';
+    }
+    
+    // 試験名はショートコードの属性か、設定の値を使用
+    $exam_title = !empty($atts['title']) ? $atts['title'] : $settings['exam_title'];
+    
+    $output = '<div class="exam-countdown">';
+    $output .= esc_html($exam_title) . 'まであと <span class="countdown-number">' . esc_html($days_left) . '</span> 日';
+    $output .= '</div>';
+    
+    // スタイルを追加
+    $output .= '<style>
+    .exam-countdown {
+        background-color: #334e68;
+        color: white;
+        padding: 10px 15px;
+        text-align: center;
+        font-weight: bold;
+        border-radius: 5px;
+        margin: 15px 0;
+    }
+    .countdown-number {
+        font-size: 1.4em;
+        color: #f9ca24;
+    }
+    </style>';
+    
+    return $output;
+}
+add_shortcode('exam_countdown', 'progress_tracker_countdown_shortcode');
