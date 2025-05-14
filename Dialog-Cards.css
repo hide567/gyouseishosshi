@@ -1,0 +1,102 @@
+/**
+ * Dialog Cards 表示用スタイル
+ *
+ * @package 行政書士試験ブログ
+ */
+
+/* Dialog Cards コンテナ */
+.dialog-cards-container {
+    margin: 30px 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* カードセパレータ */
+.card-separator {
+    height: 2px;
+    background-color: #e0e0e0;
+    margin: 30px 0;
+    position: relative;
+}
+
+.card-separator::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px;
+    height: 50px;
+    background-color: #f9f9f9;
+    border-radius: 50%;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V2M2 12h20"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    border: 2px solid #e0e0e0;
+}
+
+/* H5P コンテンツ */
+.h5p-content {
+    margin-bottom: 20px;
+}
+
+/* カードのカスタマイズ */
+.h5p-dialogcards .h5p-dialogcards-card {
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease;
+}
+
+.h5p-dialogcards .h5p-dialogcards-card:hover {
+    transform: translateY(-5px);
+}
+
+/* カード表側・裏側のスタイリング */
+.h5p-dialogcards .h5p-dialogcards-card-content {
+    padding: 20px;
+}
+
+.h5p-dialogcards .h5p-dialogcards-card-text {
+    font-size: 1.2em;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+/* ボタンのスタイリング */
+.h5p-dialogcards .h5p-dialogcards-cardwrap .h5p-dialogcards-button {
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.h5p-dialogcards .h5p-dialogcards-cardwrap .h5p-dialogcards-button:hover {
+    transform: scale(1.05);
+}
+
+/* プログレスバー */
+.h5p-dialogcards .h5p-dialogcards-progress {
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #e0e0e0;
+}
+
+.h5p-dialogcards .h5p-dialogcards-progress-bar {
+    background-color: #4CAF50;
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+/* レスポンシブ対応 */
+@media screen and (max-width: 768px) {
+    .dialog-cards-container {
+        padding: 15px;
+    }
+    
+    .h5p-dialogcards .h5p-dialogcards-card-text {
+        font-size: 1em;
+    }
+}
