@@ -48,229 +48,20 @@ function important_box_shortcode($atts, $content = null) {
 add_shortcode('important', 'important_box_shortcode');
 
 /**
- * カスタムウィジェット：学習進捗
- */
-function gyouseishoshi_progress_widget() {
-    register_widget('Gyouseishoshi_Progress_Widget');
-}
-add_action('widgets_init', 'gyouseishoshi_progress_widget');
-
-/**
- * 学習進捗ウィジェットクラス
- */
-class Gyouseishoshi_Progress_Widget extends WP_Widget {
-    
-    function __construct() {
-        parent::__construct(
-            'gyouseishoshi_progress',
-            __('学習進捗状況', 'gyouseishoshi-astra-child'),
-            array('description' => __('各科目の学習進捗を表示します。', 'gyouseishoshi-astra-child'))
-        );
-    }
-    
-    // ウィジェットの表示部分
-    public function widget($args, $instance) {
-        echo $args['before_widget'];
-        if (!empty($instance['title'])) {
-            echo $args['before_title'] . apply_filters('widget_title', $instance['title']) . $args['after_title'];
-        }
-        
-        // 進捗データ取得（オプションから）
-        $progress_data = get_option('gyouseishoshi_progress_data', array(
-            'constitutional' => array('percent' => 75, 'completed' => 11, 'total' => 15),
-            'administrative' => array('percent' => 60, 'completed' => 9, 'total' => 15),
-            'civil' => array('percent' => 45, 'completed' => 9, 'total' => 20),
-            'commercial' => array('percent' => 30, 'completed' => 3, 'total' => 10)
-        ));
-        
-        ?>
-        <div class="progress-widget">
-            <div>
-                <p>憲法</p>
-                <div class="progress-bar">
-                    <div class="progress" style="width: <?php echo esc_attr($progress_data['constitutional']['percent']); ?>%;"></div>
-                </div>
-                <div class="progress-stats">
-                    <span><?php echo esc_html($progress_data['constitutional']['percent']); ?>%</span>
-                    <span><?php echo esc_html($progress_data['constitutional']['completed']); ?>/<?php echo esc_html($progress_data['constitutional']['total']); ?>章完了</span>
-                </div>
-            </div>
-            
-            <div>
-                <p>行政法</p>
-                <div class="progress-bar">
-                    <div class="progress" style="width: <?php echo esc_attr($progress_data['administrative']['percent']); ?>%;"></div>
-                </div>
-                <div class="progress-stats">
-                    <span><?php echo esc_html($progress_data['administrative']['percent']); ?>%</span>
-                    <span><?php echo esc_html($progress_data['administrative']['completed']); ?>/<?php echo esc_html($progress_data['administrative']['total']); ?>章完了</span>
-                </div>
-            </div>
-            
-            <div>
-                <p>民法</p>
-                <div class="progress-bar">
-                    <div class="progress" style="width: <?php echo esc_attr($progress_data['civil']['percent']); ?>%;"></div>
-                </div>
-                <div class="progress-stats">
-                    <span><?php echo esc_html($progress_data['civil']['percent']); ?>%</span>
-                    <span><?php echo esc_html($progress_data['civil']['completed']); ?>/<?php echo esc_html($progress_data['civil']['total']); ?>章完了</span>
-                </div>
-            </div>
-            
-            <div>
-                <p>商法・会社法</p>
-                <div class="progress-bar">
-                    <div class="progress" style="width: <?php echo esc_attr($progress_data['commercial']['percent']); ?>%;"></div>
-                </div>
-                <div class="progress-stats">
-                    <span><?php echo esc_html($progress_data['commercial']['percent']); ?>%</span>
-                    <span><?php echo esc_html($progress_data['commercial']['completed']); ?>/<?php echo esc_html($progress_data['commercial']['total']); ?>章完了</span>
-                </div>
-            </div>
-        </div>
-        <?php
-        
-        echo $args['after_widget'];
-    }
-    
-    // 管理画面のフォーム
-    public function form($instance) {
-        $title = !empty($instance['title']) ? $instance['title'] : __('学習進捗状況', 'gyouseishoshi-astra-child');
-        ?>
-        <p>
-            <label for="<?php echo esc_attr($this->get_field_id('title')); ?>"><?php _e('タイトル:', 'gyouseishoshi-astra-child'); ?></label>
-            <input class="widefat" id="<?php echo esc_attr($this->get_field_id('title')); ?>" name="<?php echo esc_attr($this->get_field_name('title')); ?>" type="text" value="<?php echo esc_attr($title); ?>">
-        </p>
-        <p>
-            <?php _e('進捗データは管理画面の「設定 > 学習進捗管理」から編集できます。', 'gyouseishoshi-astra-child'); ?>
-        </p>
-        <?php
-    }
-    
-    // ウィジェット設定の保存
-    public function update($new_instance, $old_instance) {
-        $instance = array();
-        $instance['title'] = (!empty($new_instance['title'])) ? sanitize_text_field($new_instance['title']) : '';
-        return $instance;
-    }
-}
-
-/**
- * 管理画面の設定ページを追加
- */
-function gyouseishoshi_add_admin_menu() {
-    add_options_page(
-        __('学習進捗管理', 'gyouseishoshi-astra-child'),
-        __('学習進捗管理', 'gyouseishoshi-astra-child'),
-        'manage_options',
-        'gyouseishoshi-progress',
-        'gyouseishoshi_progress_page'
-    );
-}
-add_action('admin_menu', 'gyouseishoshi_add_admin_menu');
-
-/**
- * 設定ページの内容
- */
-function gyouseishoshi_progress_page() {
-    // 権限チェック
-    if (!current_user_can('manage_options')) {
-        return;
-    }
-    
-    // 保存処理
-    if (isset($_POST['submit_progress'])) {
-        // データを取得・サニタイズ
-        $progress_data = array(
-            'constitutional' => array(
-                'percent' => intval($_POST['constitutional_percent']),
-                'completed' => intval($_POST['constitutional_completed']),
-                'total' => intval($_POST['constitutional_total'])
-            ),
-            'administrative' => array(
-                'percent' => intval($_POST['administrative_percent']),
-                'completed' => intval($_POST['administrative_completed']),
-                'total' => intval($_POST['administrative_total'])
-            ),
-            'civil' => array(
-                'percent' => intval($_POST['civil_percent']),
-                'completed' => intval($_POST['civil_completed']),
-                'total' => intval($_POST['civil_total'])
-            ),
-            'commercial' => array(
-                'percent' => intval($_POST['commercial_percent']),
-                'completed' => intval($_POST['commercial_completed']),
-                'total' => intval($_POST['commercial_total'])
-            )
-        );
-        
-        // データを保存
-        update_option('gyouseishoshi_progress_data', $progress_data);
-        echo '<div class="notice notice-success is-dismissible"><p>' . __('進捗状況を更新しました。', 'gyouseishoshi-astra-child') . '</p></div>';
-    }
-    
-    // 現在の進捗データを取得
-    $progress_data = get_option('gyouseishoshi_progress_data', array(
-        'constitutional' => array('percent' => 75, 'completed' => 11, 'total' => 15),
-        'administrative' => array('percent' => 60, 'completed' => 9, 'total' => 15),
-        'civil' => array('percent' => 45, 'completed' => 9, 'total' => 20),
-        'commercial' => array('percent' => 30, 'completed' => 3, 'total' => 10)
-    ));
-    
-    ?>
-    <div class="wrap">
-        <h1><?php _e('学習進捗管理', 'gyouseishoshi-astra-child'); ?></h1>
-        <form method="post" action="">
-            <table class="form-table">
-                <tr>
-                    <th scope="row"><?php _e('憲法', 'gyouseishoshi-astra-child'); ?></th>
-                    <td>
-                        <label><?php _e('進捗率(%):', 'gyouseishoshi-astra-child'); ?> <input type="number" name="constitutional_percent" value="<?php echo esc_attr($progress_data['constitutional']['percent']); ?>" min="0" max="100"></label><br>
-                        <label><?php _e('完了章数:', 'gyouseishoshi-astra-child'); ?> <input type="number" name="constitutional_completed" value="<?php echo esc_attr($progress_data['constitutional']['completed']); ?>" min="0"></label><br>
-                        <label><?php _e('総章数:', 'gyouseishoshi-astra-child'); ?> <input type="number" name="constitutional_total" value="<?php echo esc_attr($progress_data['constitutional']['total']); ?>" min="1"></label>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row"><?php _e('行政法', 'gyouseishoshi-astra-child'); ?></th>
-                    <td>
-                        <label><?php _e('進捗率(%):', 'gyouseishoshi-astra-child'); ?> <input type="number" name="administrative_percent" value="<?php echo esc_attr($progress_data['administrative']['percent']); ?>" min="0" max="100"></label><br>
-                        <label><?php _e('完了章数:', 'gyouseishoshi-astra-child'); ?> <input type="number" name="administrative_completed" value="<?php echo esc_attr($progress_data['administrative']['completed']); ?>" min="0"></label><br>
-                        <label><?php _e('総章数:', 'gyouseishoshi-astra-child'); ?> <input type="number" name="administrative_total" value="<?php echo esc_attr($progress_data['administrative']['total']); ?>" min="1"></label>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row"><?php _e('民法', 'gyouseishoshi-astra-child'); ?></th>
-                    <td>
-                        <label><?php _e('進捗率(%):', 'gyouseishoshi-astra-child'); ?> <input type="number" name="civil_percent" value="<?php echo esc_attr($progress_data['civil']['percent']); ?>" min="0" max="100"></label><br>
-                        <label><?php _e('完了章数:', 'gyouseishoshi-astra-child'); ?> <input type="number" name="civil_completed" value="<?php echo esc_attr($progress_data['civil']['completed']); ?>" min="0"></label><br>
-                        <label><?php _e('総章数:', 'gyouseishoshi-astra-child'); ?> <input type="number" name="civil_total" value="<?php echo esc_attr($progress_data['civil']['total']); ?>" min="1"></label>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row"><?php _e('商法・会社法', 'gyouseishoshi-astra-child'); ?></th>
-                    <td>
-                        <label><?php _e('進捗率(%):', 'gyouseishoshi-astra-child'); ?> <input type="number" name="commercial_percent" value="<?php echo esc_attr($progress_data['commercial']['percent']); ?>" min="0" max="100"></label><br>
-                        <label><?php _e('完了章数:', 'gyouseishoshi-astra-child'); ?> <input type="number" name="commercial_completed" value="<?php echo esc_attr($progress_data['commercial']['completed']); ?>" min="0"></label><br>
-                        <label><?php _e('総章数:', 'gyouseishoshi-astra-child'); ?> <input type="number" name="commercial_total" value="<?php echo esc_attr($progress_data['commercial']['total']); ?>" min="1"></label>
-                    </td>
-                </tr>
-            </table>
-            
-            <p class="submit">
-                <input type="submit" name="submit_progress" id="submit" class="button button-primary" value="<?php _e('変更を保存', 'gyouseishoshi-astra-child'); ?>">
-            </p>
-        </form>
-    </div>
-    <?php
-}
-
-/**
  * 試験日カウントダウン表示関数
+ * 新しいカウントダウン機能で置き換えるため非推奨
+ * @deprecated
  */
 function gyouseishoshi_exam_countdown() {
-    // 試験日を設定（2025年11月9日と仮定）
-    $exam_date = strtotime('2025-11-09');
+    // settings から設定を取得
+    $settings = get_option('progress_tracker_settings', array(
+        'exam_date' => '2025-11-09',
+        'exam_title' => '行政書士試験'
+    ));
+    
+    // 日付設定を使用
+    $exam_date = isset($settings['exam_date']) ? strtotime($settings['exam_date']) : strtotime('2025-11-09');
+    $exam_title = isset($settings['exam_title']) ? $settings['exam_title'] : '行政書士試験';
     $today = current_time('timestamp');
     
     // 残り日数計算
@@ -278,7 +69,7 @@ function gyouseishoshi_exam_countdown() {
     
     // カウントダウンHTML生成
     $countdown_html = '<div class="exam-countdown">';
-    $countdown_html .= '行政書士試験まであと <span class="countdown-number">' . $days_left . '</span> 日';
+    $countdown_html .= $exam_title . 'まであと <span class="countdown-number">' . $days_left . '</span> 日';
     $countdown_html .= '</div>';
     
     return $countdown_html;
@@ -288,7 +79,12 @@ function gyouseishoshi_exam_countdown() {
  * カウントダウンをサイトヘッダーに表示
  */
 function gyouseishoshi_display_countdown() {
-    echo gyouseishoshi_exam_countdown();
+    // 新しい progress_tracker のカウントダウンが有効なら優先して表示
+    if (function_exists('progress_tracker_countdown_shortcode')) {
+        echo progress_tracker_countdown_shortcode(array());
+    } else {
+        echo gyouseishoshi_exam_countdown();
+    }
 }
 add_action('astra_header_after', 'gyouseishoshi_display_countdown');
 
@@ -296,6 +92,10 @@ add_action('astra_header_after', 'gyouseishoshi_display_countdown');
  * カウントダウンショートコード
  */
 function gyouseishoshi_countdown_shortcode() {
+    // 新しい progress_tracker のカウントダウンが有効なら優先して表示
+    if (function_exists('progress_tracker_countdown_shortcode')) {
+        return progress_tracker_countdown_shortcode(array());
+    }
     return gyouseishoshi_exam_countdown();
 }
 add_shortcode('exam_countdown', 'gyouseishoshi_countdown_shortcode');
@@ -336,7 +136,7 @@ function custom_category_count_format($output) {
 }
 add_filter('wp_list_categories', 'custom_category_count_format');
 
-//学習進捗管理
+// 学習進捗管理
 /**
  * 学習進捗管理機能を読み込む
  */
