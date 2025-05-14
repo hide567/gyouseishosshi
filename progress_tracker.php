@@ -498,142 +498,143 @@ function progress_tracker_admin_page() {
         </form>
         
         <?php elseif ($active_tab == 'progress'): ?>
-        <!-- 進捗管理タブ -->
-        <form method="post" action="">
-            <h3>学習進捗の管理</h3>
-            <p>完了した節にチェックを入れてください。第1段階（理解した）と第2段階（習得した）の2段階でチェックできます。</p>
-            
-            <div class="progress-settings">
-                <?php foreach ($subjects as $subject_key => $subject_name): ?>
-                    <div class="subject-progress">
-                        <h4><?php echo esc_html($subject_name); ?> 
-                            <span class="percent-display">
-                                (<?php echo isset($progress_data[$subject_key]['percent']) ? esc_html($progress_data[$subject_key]['percent']) : 0; ?>%完了)
-                            </span>
-                        </h4>
-                        
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width: <?php echo isset($progress_data[$subject_key]['percent']) ? esc_attr($progress_data[$subject_key]['percent']) : 0; ?>%; background-color: <?php echo isset($chapter_structure[$subject_key]['color']) ? esc_attr($chapter_structure[$subject_key]['color']) : '#4CAF50'; ?>;"></div>
-                        </div>
-                        
-                        <?php if (isset($chapter_structure[$subject_key]['chapters']) && !empty($chapter_structure[$subject_key]['chapters'])): ?>
-                            <div class="chapters-container">
-                                <?php foreach ($chapter_structure[$subject_key]['chapters'] as $chapter_id => $chapter_data): 
-                                    // 章の全節が完了しているか確認
-                                    $all_sections_completed = false;
-                                    $all_sections_mastered = false;
-                                    
-                                    if (isset($progress_data[$subject_key]['chapters'][$chapter_id])) {
-                                        $completed_sections = $progress_data[$subject_key]['chapters'][$chapter_id];
-                                        $all_sections_completed = count($completed_sections) == $chapter_data['sections'];
+<!-- 進捗管理タブ -->
+<form method="post" action="">
+    <h3>学習進捗の管理</h3>
+    <p>完了した節にチェックを入れてください。第1段階（理解した）と第2段階（習得した）の2段階でチェックできます。</p>
+    
+    <div class="progress-settings">
+        <?php foreach ($subjects as $subject_key => $subject_name): ?>
+            <div class="subject-progress">
+                <h4><?php echo esc_html($subject_name); ?> 
+                    <span class="percent-display">
+                        (<?php echo isset($progress_data[$subject_key]['percent']) ? esc_html($progress_data[$subject_key]['percent']) : 0; ?>%完了)
+                    </span>
+                </h4>
+                
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" style="width: <?php echo isset($progress_data[$subject_key]['percent']) ? esc_attr($progress_data[$subject_key]['percent']) : 0; ?>%; background-color: <?php echo isset($chapter_structure[$subject_key]['color']) ? esc_attr($chapter_structure[$subject_key]['color']) : '#4CAF50'; ?>;"></div>
+                </div>
+                
+                <?php if (isset($chapter_structure[$subject_key]['chapters']) && !empty($chapter_structure[$subject_key]['chapters'])): ?>
+                    <div class="chapters-container">
+                        <?php foreach ($chapter_structure[$subject_key]['chapters'] as $chapter_id => $chapter_data): 
+                            // 章の全節が完了しているか確認
+                            $all_sections_completed = false;
+                            $all_sections_mastered = false;
+                            
+                            if (isset($progress_data[$subject_key]['chapters'][$chapter_id])) {
+                                $completed_sections = $progress_data[$subject_key]['chapters'][$chapter_id];
+                                $all_sections_completed = count($completed_sections) == $chapter_data['sections'];
+                                
+                                // 第2段階（習得）まで完了しているか確認
+                                $mastered_count = 0;
+                                foreach ($completed_sections as $section_num => $level) {
+                                    if ($level >= 2) $mastered_count++;
+                                }
+                                $all_sections_mastered = $mastered_count == $chapter_data['sections'];
+                            }
+                            
+                            // 章の背景色を設定
+                            $chapter_style = '';
+                            if ($all_sections_mastered) {
+                                $chapter_style = 'background-color: ' . esc_attr($progress_settings['second_check_color']) . ';';
+                            } elseif ($all_sections_completed) {
+                                $chapter_style = 'background-color: ' . esc_attr($progress_settings['first_check_color']) . ';';
+                            }
+                        ?>
+                            <div class="chapter-item" style="<?php echo $chapter_style; ?>">
+                                <h5><?php echo esc_html($chapter_data['title']); ?></h5>
+                                
+                                <div class="sections-list">
+                                    <?php for ($section = 1; $section <= $chapter_data['sections']; $section++): 
+                                        // 1段階目と2段階目のチェック状態
+                                        $first_check = false;
+                                        $second_check = false;
                                         
-                                        // 第2段階（習得）まで完了しているか確認
-                                        $mastered_count = 0;
-                                        foreach ($completed_sections as $section_num => $level) {
-                                            if ($level >= 2) $mastered_count++;
+                                        if (isset($progress_data[$subject_key]['chapters'][$chapter_id][$section])) {
+                                            $check_level = $progress_data[$subject_key]['chapters'][$chapter_id][$section];
+                                            $first_check = $check_level >= 1;
+                                            $second_check = $check_level >= 2;
                                         }
-                                        $all_sections_mastered = $mastered_count == $chapter_data['sections'];
-                                    }
-                                    
-                                    // 章の背景色を設定
-                                    $chapter_style = '';
-                                    if ($all_sections_mastered) {
-                                        $chapter_style = 'background-color: ' . esc_attr($progress_settings['second_check_color']) . ';';
-                                    } elseif ($all_sections_completed) {
-                                        $chapter_style = 'background-color: ' . esc_attr($progress_settings['first_check_color']) . ';';
-                                    }
-                                ?>
-                                    <div class="chapter-item" style="<?php echo $chapter_style; ?>">
-                                        <h5><?php echo esc_html($chapter_data['title']); ?></h5>
                                         
-                                        <div class="sections-list">
-                                            <?php for ($section = 1; $section <= $chapter_data['sections']; $section++): 
-                                                // 1段階目と2段階目のチェック状態
-                                                $first_check = false;
-                                                $second_check = false;
-                                                
-                                                if (isset($progress_data[$subject_key]['chapters'][$chapter_id][$section])) {
-                                                    $check_level = $progress_data[$subject_key]['chapters'][$chapter_id][$section];
-                                                    $first_check = $check_level >= 1;
-                                                    $second_check = $check_level >= 2;
-                                                }
-                                                
-                                                // セクションの背景色を設定
-                                                $section_style = '';
-                                                if ($second_check) {
-                                                    $section_style = 'background-color: ' . esc_attr($progress_settings['second_check_color']) . ';';
-                                                } elseif ($first_check) {
-                                                    $section_style = 'background-color: ' . esc_attr($progress_settings['first_check_color']) . ';';
-                                                }
-                                            ?>
-                                                <div class="section-item" style="<?php echo $section_style; ?>">
-                                                    <span class="section-label">節<?php echo $section; ?></span>
-                                                    <div class="section-checkboxes">
-                                                        <label title="理解した">
-                                                            <input type="checkbox" name="<?php echo $subject_key; ?>_chapter_<?php echo $chapter_id; ?>_section_<?php echo $section; ?>" value="1" <?php checked($first_check); ?>>
-                                                            <span class="check-label">理解</span>
-                                                        </label>
-                                                        <label title="習得した">
-                                                            <input type="checkbox" name="<?php echo $subject_key; ?>_chapter_<?php echo $chapter_id; ?>_section_<?php echo $section; ?>_second" value="1" <?php checked($second_check); ?>>
-                                                            <span class="check-label">習得</span>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            <?php endfor; ?>
+                                        // セクションの背景色を設定
+                                        $section_style = '';
+                                        if ($second_check) {
+                                            $section_style = 'background-color: ' . esc_attr($progress_settings['second_check_color']) . ';';
+                                        } elseif ($first_check) {
+                                            $section_style = 'background-color: ' . esc_attr($progress_settings['first_check_color']) . ';';
+                                        }
+                                    ?>
+                                        <div class="section-item" style="<?php echo $section_style; ?>">
+                                            <span class="section-label">節<?php echo $section; ?></span>
+                                            <div class="section-checkboxes">
+                                                <label title="理解した">
+                                                    <input type="checkbox" name="<?php echo $subject_key; ?>_chapter_<?php echo $chapter_id; ?>_section_<?php echo $section; ?>" value="1" <?php checked($first_check); ?>>
+                                                    <span class="check-label">理解</span>
+                                                </label>
+                                                <label title="習得した">
+                                                    <input type="checkbox" name="<?php echo $subject_key; ?>_chapter_<?php echo $chapter_id; ?>_section_<?php echo $section; ?>_second" value="1" <?php checked($second_check); ?>>
+                                                    <span class="check-label">習得</span>
+                                                </label>
+                                            </div>
                                         </div>
-                                    </div>
-                                <?php endforeach; ?>
+                                    <?php endfor; ?>
+                                </div>
                             </div>
-                        <?php else: ?>
-                            <p>この科目には章が設定されていません。「科目構造設定」タブで設定してください。</p>
-                        <?php endif; ?>
+                        <?php endforeach; ?>
                     </div>
-                <?php endforeach; ?>
+                <?php else: ?>
+                    <p>この科目には章が設定されていません。「科目構造設定」タブで設定してください。</p>
+                <?php endif; ?>
             </div>
-            
-            <p class="submit">
-                <input type="submit" name="save_progress" class="button button-primary" value="進捗状況を保存">
-            </p>
-        </form>
-        
-        <!-- 設定タブ -->
-        <h3>進捗管理設定</h3>
-        <form method="post" action="">
-            <h4>チェック表示設定</h4>
-            <p>進捗管理で使用する2段階チェックの色を設定します。</p>
-            
-            <table class="form-table">
-                <tr>
-                    <th scope="row">第1段階（理解した）の色</th>
-                    <td>
-                        <input type="color" name="first_check_color" value="<?php echo esc_attr($progress_settings['first_check_color']); ?>">
-                        <p class="description">第1段階でチェックされた項目の背景色</p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">第2段階（習得した）の色</th>
-                    <td>
-                        <input type="color" name="second_check_color" value="<?php echo esc_attr($progress_settings['second_check_color']); ?>">
-                        <p class="description">第2段階までチェックされた項目の背景色</p>
-                    </td>
-                </tr>
-            </table>
-            
-            <h4>ショートコードの使用方法</h4>
-            <div class="shortcode-usage">
-                <p>進捗表示ショートコード: <code>[progress_tracker]</code></p>
-                <p>特定の科目のみ表示: <code>[progress_tracker subject="constitutional,civil"]</code></p>
-                <p>スタイル指定: <code>[progress_tracker style="simple"]</code> (スタイル: default, simple, compact)</p>
-                <p>試験カウントダウン: <code>[exam_countdown]</code></p>
-                <p>カスタム試験名: <code>[exam_countdown title="司法試験"]</code></p>
-                <p>暗記カード表示: <code>[study_flashcards id="1"]</code>または<code>[study_flashcards subject="constitutional"]</code></p>
-            </div>
-            
-            <p class="submit">
-                <input type="submit" name="save_check_settings" class="button button-primary" value="設定を保存">
-            </p>
-        </form>
-        <?php endif; ?>
+        <?php endforeach; ?>
+    </div>
+    
+    <p class="submit">
+        <input type="submit" name="save_progress" class="button button-primary" value="進捗状況を保存">
+    </p>
+</form>
+
+<?php elseif ($active_tab == 'settings'): ?>
+<!-- 設定タブ -->
+<h3>進捗管理設定</h3>
+<form method="post" action="">
+    <h4>チェック表示設定</h4>
+    <p>進捗管理で使用する2段階チェックの色を設定します。</p>
+    
+    <table class="form-table">
+        <tr>
+            <th scope="row">第1段階（理解した）の色</th>
+            <td>
+                <input type="color" name="first_check_color" value="<?php echo esc_attr($progress_settings['first_check_color']); ?>">
+                <p class="description">第1段階でチェックされた項目の背景色</p>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">第2段階（習得した）の色</th>
+            <td>
+                <input type="color" name="second_check_color" value="<?php echo esc_attr($progress_settings['second_check_color']); ?>">
+                <p class="description">第2段階までチェックされた項目の背景色</p>
+            </td>
+        </tr>
+    </table>
+    
+    <h4>ショートコードの使用方法</h4>
+    <div class="shortcode-usage">
+        <p>進捗表示ショートコード: <code>[progress_tracker]</code></p>
+        <p>特定の科目のみ表示: <code>[progress_tracker subject="constitutional,civil"]</code></p>
+        <p>スタイル指定: <code>[progress_tracker style="simple"]</code> (スタイル: default, simple, compact)</p>
+        <p>試験カウントダウン: <code>[exam_countdown]</code></p>
+        <p>カスタム試験名: <code>[exam_countdown title="司法試験"]</code></p>
+        <p>暗記カード表示: <code>[dialog_cards id="1"]</code>または<code>[dialog_cards subject="constitutional"]</code></p>
+    </div>
+    
+    <p class="submit">
+        <input type="submit" name="save_check_settings" class="button button-primary" value="設定を保存">
+    </p>
+</form>
+<?php endif; ?>
     </div>
     
     <style>
