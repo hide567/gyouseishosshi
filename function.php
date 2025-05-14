@@ -28,6 +28,22 @@ function gyouseishoshi_astra_child_enqueue_styles() {
         array('astra-theme-css'),
         wp_get_theme()->get('Version')
     );
+    
+    // インタラクティブ機能のためのJavaScript
+    if (is_user_logged_in()) {
+        wp_enqueue_script(
+            'progress-tracker-interactive',
+            get_stylesheet_directory_uri() . '/js/progress-tracker.js',
+            array('jquery'),
+            wp_get_theme()->get('Version'),
+            true
+        );
+        
+        wp_localize_script('progress-tracker-interactive', 'progress_tracker', array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('progress_tracker_nonce')
+        ));
+    }
 }
 add_action('wp_enqueue_scripts', 'gyouseishoshi_astra_child_enqueue_styles');
 
@@ -101,10 +117,14 @@ function gyouseishoshi_countdown_shortcode() {
 add_shortcode('exam_countdown', 'gyouseishoshi_countdown_shortcode');
 
 // 行政書士試験勉強カレンダー機能を含める
-include_once(get_stylesheet_directory() . '/inc/study-calendar.php');
+if (file_exists(get_stylesheet_directory() . '/inc/study-calendar.php')) {
+    include_once(get_stylesheet_directory() . '/inc/study-calendar.php');
+}
 
 // コミュニティ機能を含める
-include_once(get_stylesheet_directory() . '/inc/community-functions.php');
+if (file_exists(get_stylesheet_directory() . '/inc/community-functions.php')) {
+    include_once(get_stylesheet_directory() . '/inc/community-functions.php');
+}
 
 /**
  * カテゴリーの表示形式をカスタマイズする
@@ -136,10 +156,43 @@ function custom_category_count_format($output) {
 }
 add_filter('wp_list_categories', 'custom_category_count_format');
 
-// 学習進捗管理
 /**
  * 学習進捗管理機能を読み込む
  */
 if (file_exists(get_stylesheet_directory() . '/inc/progress-tracker.php')) {
     require_once get_stylesheet_directory() . '/inc/progress-tracker.php';
 }
+
+/**
+ * 管理画面の「不明なタスク」問題を修正
+ */
+function fix_unknown_task_redirect() {
+    global $pagenow;
+    
+    // 管理画面編集ページでパラメーターを確認
+    if ($pagenow == 'admin.php' && isset($_GET['page']) && $_GET['page'] == 'h5p' && isset($_GET['task'])) {
+        // タスクに基づいてリダイレクト
+        $task = sanitize_text_field($_GET['task']);
+        
+        // 編集タスクが指定されている場合
+        if ($task == 'edit' && isset($_GET['id'])) {
+            $id = intval($_GET['id']);
+            wp_redirect(admin_url("admin.php?page=h5p-content&id={$id}"));
+            exit;
+        }
+        
+        // 新規作成タスクの場合
+        if ($task == 'new') {
+            wp_redirect(admin_url('admin.php?page=h5p-new'));
+            exit;
+        }
+        
+        // 表示タスクの場合
+        if ($task == 'show' && isset($_GET['id'])) {
+            $id = intval($_GET['id']);
+            wp_redirect(admin_url("admin.php?page=h5p-content&id={$id}&view=true"));
+            exit;
+        }
+    }
+}
+add_action('admin_init', 'fix_unknown_task_redirect');
